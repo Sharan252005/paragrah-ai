@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f5f1">
+  <title>Smart Study Notes Generator</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202623;
+      --muted: #6c756f;
+      --paper: #f6f5f1;
+      --card: #fffefa;
+      --line: #e4e6df;
+      --green: #267452;
+      --green-dark: #1b5c3f;
+      --mint: #e6f2e9;
+      --orange: #ed9a54;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 90% 0%, rgba(218, 235, 216, .64), transparent 28rem),
+        var(--paper);
+    }
+
+    button, textarea { font: inherit; }
+    .shell { width: min(1080px, calc(100% - 40px)); margin: 0 auto; }
+    header { display: flex; align-items: center; justify-content: space-between; padding: 25px 0; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 750; letter-spacing: -.02em; }
+    .brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 11px; color: white; background: var(--green); }
+    .brand-mark svg { width: 18px; }
+    .header-note { color: var(--muted); font-size: 12px; }
+
+    .hero { max-width: 660px; margin: 43px auto 30px; text-align: center; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid #d8e7d8; border-radius: 999px; color: var(--green-dark); background: #edf5eb; font-size: 11px; font-weight: 700; letter-spacing: .055em; text-transform: uppercase; }
+    .eyebrow span { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+    h1 { margin: 16px 0 10px; font-size: clamp(34px, 6vw, 54px); line-height: 1.06; letter-spacing: -.055em; }
+    .hero p { max-width: 510px; margin: 0 auto; color: var(--muted); font-size: 15px; line-height: 1.65; }
+
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; padding-bottom: 64px; }
+    .panel { overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: var(--card); box-shadow: 0 12px 36px rgba(43, 54, 44, .045); }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; padding: 17px 19px; border-bottom: 1px solid var(--line); }
+    .panel-title { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 750; }
+    .step { display: grid; width: 23px; height: 23px; place-items: center; border-radius: 7px; color: var(--green-dark); background: var(--mint); font-size: 11px; }
+    .word-counter { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+    .input-body { padding: 17px 19px 19px; }
+    textarea { display: block; width: 100%; min-height: 260px; resize: vertical; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 14px; line-height: 1.7; }
+    textarea::placeholder { color: #a2aaa3; }
+    .input-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 9px; }
+    .sample-label { color: var(--muted); font-size: 11px; }
+    .samples { display: flex; flex-wrap: wrap; gap: 6px; }
+    .sample-button { padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; color: #46514a; background: #fff; font-size: 10px; cursor: pointer; transition: border-color .15s, background .15s; }
+    .sample-button:hover { border-color: #aacbb4; background: #f2f8f1; }
+    .generate-button { display: flex; width: 100%; justify-content: center; align-items: center; gap: 8px; margin-top: 17px; padding: 12px; border: 0; border-radius: 10px; color: white; background: var(--green); font-size: 13px; font-weight: 700; cursor: pointer; transition: background .15s, transform .15s; }
+    .generate-button:hover:not(:disabled) { transform: translateY(-1px); background: var(--green-dark); }
+    .generate-button:disabled { cursor: wait; opacity: .72; }
+    .generate-button svg { width: 16px; height: 16px; }
+
+    .result-content { min-height: 380px; padding: 20px; }
+    .empty-state { display: grid; min-height: 340px; place-content: center; justify-items: center; text-align: center; }
+    .empty-icon { display: grid; width: 48px; height: 48px; margin-bottom: 13px; place-items: center; border: 1px solid #e8ebe4; border-radius: 15px; color: var(--green); background: #f5f8f1; }
+    .empty-icon svg { width: 21px; }
+    .empty-state strong { font-size: 13px; }
+    .empty-state p { max-width: 225px; margin: 6px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .result-section + .result-section { margin-top: 22px; }
+    .result-label { display: flex; align-items: center; gap: 7px; margin-bottom: 9px; color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .result-label svg { width: 14px; height: 14px; color: var(--green); }
+    .summary-text { margin: 0; padding: 13px 14px; border: 1px solid #e5ecdf; border-radius: 10px; background: #f7f9f3; font-size: 13px; line-height: 1.7; }
+    .points-list { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+    .points-list li { display: flex; gap: 9px; align-items: flex-start; color: #3e4942; font-size: 12px; line-height: 1.55; }
+    .point-dot { flex: 0 0 17px; display: grid; width: 17px; height: 17px; margin-top: 1px; place-items: center; border-radius: 50%; color: var(--green); background: var(--mint); font-size: 9px; font-weight: 700; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 8px; margin-top: 21px; padding-top: 16px; border-top: 1px solid var(--line); }
+    .stat { padding: 10px 9px; border-radius: 9px; background: #f7f7f2; }
+    .stat-label { display: block; margin-bottom: 4px; color: var(--muted); font-size: 9px; }
+    .stat-value { font-size: 15px; font-weight: 750; font-variant-numeric: tabular-nums; }
+    .stat-value.reduction { color: var(--green-dark); }
+    .error-message { margin: 0; padding: 12px; border: 1px solid #f0ceca; border-radius: 9px; color: #9b3b32; background: #fff5f3; font-size: 12px; line-height: 1.5; }
+    footer { padding: 0 0 25px; color: #879087; text-align: center; font-size: 10px; }
+
+    @media (max-width: 740px) {
+      .hero { margin-top: 30px; }
+      main { grid-template-columns: 1fr; }
+      textarea { min-height: 200px; }
+      .result-content { min-height: 280px; }
+      .empty-state { min-height: 230px; }
+    }
+    @media (max-width: 430px) {
+      .shell { width: min(100% - 24px, 1080px); }
+      header { padding: 17px 0; }
+      .header-note { font-size: 10px; }
+      .input-foot { align-items: flex-start; flex-direction: column; }
+      .samples { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.8A2.8 2.8 0 0 1 7.8 2H20v18H7.8A2.8 2.8 0 0 1 5 17.2z"/><path d="M5 17.5A2.5 2.5 0 0 1 7.5 15H20M9 7h7M9 10h7"/></svg>
+        </span>
+        StudyNotes
+      </div>
+      <span class="header-note">Your reading, made easier</span>
+    </header>
+
+    <section class="hero">
+      <span class="eyebrow"><span></span> AI-powered study companion</span>
+      <h1>Big paragraphs.<br>Small, smart notes.</h1>
+      <p>Turn a block of text into a clear summary and key takeaways, so you can spend more time learning and less time highlighting.</p>
+    </section>
+
+    <main>
+      <section class="panel" aria-labelledby="input-heading">
+        <div class="panel-head">
+          <div class="panel-title"><span class="step">01</span><span id="input-heading">Your paragraph</span></div>
+          <span class="word-counter" id="word-counter">0 words</span>
+        </div>
+        <div class="input-body">
+          <label for="source-text" hidden>Paste your paragraph here</label>
+          <textarea id="source-text" maxlength="8000" placeholder="Paste a paragraph from your notes, textbook, or reading..."></textarea>
+          <div class="input-foot">
+            <span class="sample-label">Need a starting point?</span>
+            <div class="samples" aria-label="Load a sample paragraph">
+              <button class="sample-button" type="button" data-sample="biology">Biology</button>
+              <button class="sample-button" type="button" data-sample="history">History</button>
+              <button class="sample-button" type="button" data-sample="climate">Climate</button>
+            </div>
+          </div>
+          <button class="generate-button" id="generate-button" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/><path d="m19 14 .9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9z"/></svg>
+            <span>Generate study notes</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="result-heading" aria-live="polite">
+        <div class="panel-head">
+          <div class="panel-title"><span class="step">02</span><span id="result-heading">Your study notes</span></div>
+        </div>
+        <div class="result-content" id="result-content">
+          <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v6h5M9 14h6M9 17h6"/></svg>
+            </span>
+            <strong>Your notes will appear here</strong>
+            <p>Add a paragraph and generate notes to see its summary and key takeaways.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>Made for clearer thinking · AI summaries can make mistakes, so check important details against the source.</footer>
+  </div>
+
+  <script>
+    const samples = {
+      biology: "Photosynthesis is the process by which green plants, algae, and some bacteria convert light energy into chemical energy. In plants, it takes place mainly in the chloroplasts, where chlorophyll absorbs sunlight. During the light-dependent reactions, water molecules are split, releasing oxygen and producing energy-carrying molecules. The Calvin cycle then uses this energy to convert carbon dioxide into glucose. Photosynthesis supports nearly all food chains and helps regulate atmospheric carbon dioxide.",
+      history: "The printing press, developed in Europe by Johannes Gutenberg around 1440, transformed the spread of information. Before its invention, books had to be copied by hand, making them slow and expensive to produce. Movable metal type allowed printers to create many consistent copies quickly and at lower cost. Books and pamphlets became more widely available, helping ideas travel across social classes and national borders. The technology contributed to the spread of literacy, the Reformation, and the Scientific Revolution.",
+      climate: "The greenhouse effect is a natural process that keeps Earth warm enough to support life. Sunlight passes through the atmosphere and warms the surface, which releases energy back toward space as infrared radiation. Greenhouse gases, including carbon dioxide, methane, and water vapor, absorb and re-emit some of this heat. Human activities such as burning fossil fuels and clearing forests have increased the concentration of these gases. This enhanced greenhouse effect is raising global temperatures and contributing to changes in weather patterns, sea levels, and ecosystems."
+    };
+
+    const textArea = document.querySelector("#source-text");
+    const counter = document.querySelector("#word-counter");
+    const button = document.querySelector("#generate-button");
+    const result = document.querySelector("#result-content");
+    const wordPattern = /\b[\w’'-]+\b/gu;
+
+    function countWords(text) {
+      return (text.match(wordPattern) || []).length;
+    }
+
+    function updateCounter() {
+      const count = countWords(textArea.value);
+      counter.textContent = `${count} ${count === 1 ? "word" : "words"}`;
+    }
+
+    function showError(message) {
+      const paragraph = document.createElement("p");
+      paragraph.className = "error-message";
+      paragraph.textContent = message;
+      result.replaceChildren(paragraph);
+    }
+
+    function renderNotes(data) {
+      const fragment = document.createDocumentFragment();
+      const summarySection = document.createElement("section");
+      summarySection.className = "result-section";
+      const summaryLabel = document.createElement("div");
+      summaryLabel.className = "result-label";
+      summaryLabel.textContent = "Quick summary";
+      const summary = document.createElement("p");
+      summary.className = "summary-text";
+      summary.textContent = data.summary;
+      summarySection.append(summaryLabel, summary);
+
+      const pointsSection = document.createElement("section");
+      pointsSection.className = "result-section";
+      const pointsLabel = document.createElement("div");
+      pointsLabel.className = "result-label";
+      pointsLabel.textContent = "Key takeaways";
+      const list = document.createElement("ul");
+      list.className = "points-list";
+      data.key_points.forEach((point, index) => {
+        const item = document.createElement("li");
+        const number = document.createElement("span");
+        number.className = "point-dot";
+        number.textContent = String(index + 1);
+        const text = document.createElement("span");
+        text.textContent = point;
+        item.append(number, text);
+        list.append(item);
+      });
+      pointsSection.append(pointsLabel, list);
+
+      const stats = document.createElement("div");
+      stats.className = "stats";
+      const values = [
+        ["Original", `${data.original_word_count} words`, ""],
+        ["Summary", `${data.summary_word_count} words`, ""],
+        ["Text reduced", `${data.reduction_percentage}%`, "reduction"]
+      ];
+      values.forEach(([label, value, className]) => {
+        const stat = document.createElement("div");
+        stat.className = "stat";
+        const statLabel = document.createElement("span");
+        statLabel.className = "stat-label";
+        statLabel.textContent = label;
+        const statValue = document.createElement("strong");
+        statValue.className = `stat-value ${className}`.trim();
+        statValue.textContent = value;
+        stat.append(statLabel, statValue);
+        stats.append(stat);
+      });
+
+      fragment.append(summarySection, pointsSection, stats);
+      result.replaceChildren(fragment);
+    }
+
+    document.querySelectorAll("[data-sample]").forEach((sampleButton) => {
+      sampleButton.addEventListener("click", () => {
+        textArea.value = samples[sampleButton.dataset.sample];
+        updateCounter();
+      });
+    });
+
+    textArea.addEventListener("input", updateCounter);
+    button.addEventListener("click", async () => {
+      const text = textArea.value.trim();
+      if (!text) {
+        showError("Paste a paragraph or choose a sample before generating notes.");
+        textArea.focus();
+        return;
+      }
+
+      button.disabled = true;
+      button.querySelector("span").textContent = "Creating your notes...";
+      result.innerHTML = '<div class="empty-state"><strong>Reading your paragraph...</strong><p>Generating a summary and key takeaways.</p></div>';
+      try {
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.detail || "Could not generate notes. Please try again.");
+        }
+        renderNotes(data);
+      } catch (error) {
+        showError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+      } finally {
+        button.disabled = false;
+        button.querySelector("span").textContent = "Generate study notes";
+      }
+    });
+  </script>
+</body>
+</html>
